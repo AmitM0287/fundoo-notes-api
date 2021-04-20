@@ -1,56 +1,50 @@
-from django.http import JsonResponse
 from logging_configuration.logging_config import get_logger
-from django.views import View
 from django.contrib.auth.models import User, auth
+from .serializers import UserLoginSerializer, UserRegisterSerializer
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
 
 
 # Get logger to put exceptions into exceptions.log file
 logger = get_logger()
 
 
-"""
-    UserLogin  
-"""
-class UserLogin(View):
-    def post(self, request, *args, **kwargs):
+class UserLogin(APIView):
+    """
+        User Login View
+    """
+    def post(self, request, format=None):
         try:
-            # Taking inputs from user
-            username = request.POST['username']
-            password = request.POST['password']
-            # Authenticate username and password
-            user = auth.authenticate(username=username, password=password)
-            if user is not None:
-                return JsonResponse({'Status': 200, 'Message': 'User successfully logged in!'})
+            serializer = UserLoginSerializer(data=request.data)
+            serializer.is_valid()
+            user = auth.authenticate(username=serializer.data.get('username'), password=serializer.data.get('password'))
+            if user is not None: 
+                return Response({'Message': 'Login successfull!'}, status=status.HTTP_200_OK)
             else:
-                return JsonResponse({'Status': 200, 'Message': 'User does not exist!'})
+                return Response({'Message': 'Login failed!'}, status=status.HTTP_401_UNAUTHORIZED)
         except Exception as e:
             logger.exception(e)
-            return JsonResponse({'Status': 'NA', 'Message': 'Oops! Something went wrong. Please try again...'})
+            return Response({'Message': 'Oops! Something went wrong!'}, status=status.HTTP_400_BAD_REQUEST)
 
 
-"""
-    UserRegistration
-"""
-class UserRegistration(View):
-    def post(self, request, *args, **kwargs):
+class UserRegister(APIView):
+    """
+        User Register View
+    """
+    def post(self, request, format=None):
         try:
-            # Taking inputs from user
-            first_name = request.POST['first_name']
-            last_name = request.POST['last_name']
-            email = request.POST['email']
-            username = request.POST['username']
-            password = request.POST['password']
-            # Check weather the username is already taken or not
-            if User.objects.filter(username=username).exists():
-                return JsonResponse({'Status': 200, 'Message': 'Username is already taken! Try another one...'})
-            # Check the email is already taken or not
-            elif User.objects.filter(email=email).exists():
-                return JsonResponse({'Status': 200, 'Message': 'Email is already taken! Try another one...'})
+            serializer = UserRegisterSerializer(data=request.data)
+            if serializer.is_valid():
+                if User.objects.filter(email=serializer.data.get('email')).exists():
+                    return Response({'Message': 'A user with that email already exists.'}, status=status.HTTP_401_UNAUTHORIZED)
+                else:
+                    user = User.objects.create_user(first_name=serializer.data.get('first_name'), last_name=serializer.data.get('last_name'), email=serializer.data.get('email'), username=serializer.data.get('username'), password=serializer.data.get('password'))
+                    user.save()
+                    return Response({'Message': 'Registration successfull!'}, status=status.HTTP_201_CREATED)
             else:
-                # Create a new user
-                user = User.objects.create_user(first_name=first_name, last_name=last_name, email=email, username=username, password=password)
-                user.save()
-                return JsonResponse({'Status':200, 'Message': 'User registered successfully!'})
+                return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
         except Exception as e:
             logger.exception(e)
-            return JsonResponse({'Status': 'NA', 'Message': 'Oops! Something went wrong. Please try again...'})
+            return Response({'Message': 'Oops! Something went wrong!'}, status=status.HTTP_400_BAD_REQUEST)
