@@ -1,29 +1,59 @@
-from django.http import JsonResponse
 from logging_configuration.logging_config import get_logger
-from django.views import View
+from .serializers import NotesSerializer
 from .models import Notes
-from django.contrib.auth.models import User
+
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.views import APIView
+
+from django.http import Http404
 
 
 # Get logger to put exceptions into exceptions.log file
 logger = get_logger()
 
 
-"""
-    SaveNotes
-"""
-class SaveNotes(View):
-    def post(self, request, *args, **kwargs):
+class NotesList(APIView):
+    """
+        List of all notes, or create a new note.
+    """
+    def get(self, request, format=None):
         try:
-            # Taking user inputs
-            title = request.POST['title']
-            notes = request.POST['notes']
-            user_id = request.POST['user_id']
-            user = User.objects.get(id=user_id)
-            # Save notes
-            notes = Notes(title=title, notes=notes, user_id=user)
-            notes.save()
-            return JsonResponse({'Status': 200, 'Message': 'Notes saved successfully!'})
+            notes = Notes.objects.all()
+            serializer = NotesSerializer(notes, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
             logger.exception(e)
-            return JsonResponse({'Status': 'NA', 'Message': 'Oops! Something went wrong. Please try again...'})
+            return Response({'Message': 'Oops! Something went wrong!'}, status=status.HTTP_400_BAD_REQUEST)
+
+    def post(self, request, format=None):
+        try:
+            serializer = NotesSerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response({'Message': 'Notes created successfully!'}, status=status.HTTP_201_CREATED)
+            else:
+                return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
+        except Exception as e:
+            logger.exception(e)
+            return Response({'Message': 'Oops! Something went wrong!'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class NotesDetail(APIView):
+    """
+        Retrieve a notes instance.
+    """
+    def get_object(self, pk):
+        try:
+            return Notes.objects.get(pk=pk)
+        except Notes.DoesNotExist:
+            raise Http404
+
+    def get(self, request, pk, format=None):
+        try:
+            notes = self.get_object(pk)
+            serializer = NotesSerializer(notes)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            logger.exception(e)
+            return Response({'Message': 'Oops! Something went wrong!'}, status=status.HTTP_400_BAD_REQUEST)
