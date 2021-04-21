@@ -7,8 +7,10 @@ from . import views
 
 # Urls to handle specific request
 urlpatterns = [
-    path('notes/', views.NotesList.as_view()),
-    path('notes/<int:pk>/', views.NotesDetail.as_view()),
+    path('create/', views.CreateNotes.as_view()),
+    path('update/<int:id>/', views.UpdateNotes.as_view()),
+    path('delete/<int:id>/', views.DeleteNotes.as_view()),
+    path('list/<int:id>/', views.ListNotes.as_view()),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)
