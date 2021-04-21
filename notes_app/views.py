@@ -1,59 +1,80 @@
 from logging_configuration.logging_config import get_logger
-from .serializers import NotesSerializer
-from .models import Notes
+from notes_app.serializers import NotesSerializer
+from notes_app.models import Notes
 
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
-
-from django.http import Http404
 
 
 # Get logger to put exceptions into exceptions.log file
 logger = get_logger()
 
 
-class NotesList(APIView):
+class CreateNotes(APIView):
     """
-        List of all notes, or create a new note.
+        Create a Notes instance
     """
-    def get(self, request, format=None):
-        try:
-            notes = Notes.objects.all()
-            serializer = NotesSerializer(notes, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        except Exception as e:
-            logger.exception(e)
-            return Response({'Message': 'Oops! Something went wrong!'}, status=status.HTTP_400_BAD_REQUEST)
-
     def post(self, request, format=None):
         try:
             serializer = NotesSerializer(data=request.data)
             if serializer.is_valid():
                 serializer.save()
-                return Response({'Message': 'Notes created successfully!'}, status=status.HTTP_201_CREATED)
+                return Response({'message': 'Notes created successfully!'}, status=status.HTTP_201_CREATED)
             else:
                 return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
         except Exception as e:
             logger.exception(e)
-            return Response({'Message': 'Oops! Something went wrong!'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': 'Oops! Something went wrong!'}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class NotesDetail(APIView):
+class UpdateNotes(APIView):
     """
-        Retrieve a notes instance.
+        Update a Notes instance
     """
-    def get_object(self, pk):
+    def put(self, request, id, format=None):
         try:
-            return Notes.objects.get(pk=pk)
+            notes = Notes.objects.get(id=id)
+            serializer = NotesSerializer(notes, data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response({'message': 'Notes updated successfully!'}, status=status.HTTP_202_ACCEPTED)
+            else:
+                return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
         except Notes.DoesNotExist:
-            raise Http404
-
-    def get(self, request, pk, format=None):
-        try:
-            notes = self.get_object(pk)
-            serializer = NotesSerializer(notes)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response({'message': 'Notes does not exist!'}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             logger.exception(e)
-            return Response({'Message': 'Oops! Something went wrong!'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': 'Oops! Something went wrong!'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class DeleteNotes(APIView):
+    """
+        Delete a Notes instance
+    """
+    def delete(self, request, id, format=None):
+        try:
+            notes = Notes.objects.get(id=id)
+            notes.delete()
+            return Response({'message': 'Notes deleted successfully!'}, status=status.HTTP_204_NO_CONTENT)
+        except Notes.DoesNotExist:
+            return Response({'message': 'Notes does not exist!'}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            logger.exception(e)
+            return Response({'message': 'Oops! Something went wrong!'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ListNotes(APIView):
+    """
+        Retrieve a Notes instance.
+    """
+    def get(self, request, id, format=None):
+        try:
+            notes = Notes.objects.filter(user_id=id)
+            serializer = NotesSerializer(list(notes), many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Notes.DoesNotExist:
+            return Response({'message': 'Notes does not exist!'}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            logger.exception(e)
+            return Response({'message': 'Oops! Something went wrong!'}, status=status.HTTP_400_BAD_REQUEST)
