@@ -1,16 +1,10 @@
-from rest_framework.urlpatterns import format_suffix_patterns
-
 from django.urls import path
 
-from . import views
+from notes_app import views
 
 
-# Urls to handle specific request
+# URL Configuration for note_app
+app_name='notes_app'
 urlpatterns = [
-    path('create/', views.CreateNotes.as_view()),
-    path('update/<int:id>/', views.UpdateNotes.as_view()),
-    path('delete/<int:id>/', views.DeleteNotes.as_view()),
-    path('list/<int:id>/', views.ListNotes.as_view()),
+    path('', views.NotesCRUD.as_view(), name='notes_crud'),
 ]
-
-urlpatterns = format_suffix_patterns(urlpatterns)
