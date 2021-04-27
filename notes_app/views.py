@@ -1,8 +1,9 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
+from rest_framework.exceptions import ValidationError
 
-from notes_app.serializers import NotesSerializer, NotesUpdateSerializer
+from notes_app.serializers import NotesSerializer, UpdateSerializer
 from logging_config.logger import get_logger
 from notes_app.models import Notes
 from notes_app.utils import get_notes_by_id, get_notes_by_user_id
@@ -22,12 +23,12 @@ class NotesCRUD(APIView):
             :return: It's return notes instances according to that user id.
         """
         try:
-            token = request.headers.get('Authorization')
-            decode = jwt.decode(token, settings.SECRET_KEY, algorithms='HS256')
+            # token = request.headers.get('Authorization')
+            # decode = jwt.decode(token, settings.SECRET_KEY, algorithms='HS256')
             # Get notes object by user id
             notes = get_notes_by_user_id(request.data.get('user_id'))
             # Notes serializer
-            serializer = NotesSerializer(list(notes), many=True)
+            serializer = NotesSerializer(notes, many=True)
             # Return notes instances
             return Response({'success': True, 'message': 'Getting user notes successfully!', 'data': serializer.data}, status=status.HTTP_200_OK)
         except Notes.DoesNotExist as e:
@@ -47,14 +48,13 @@ class NotesCRUD(APIView):
         try:
             # Notes serializer
             serializer = NotesSerializer(data=request.data)
-            if serializer.is_valid():
-                serializer.save()
-                # Notes instance created successfully
-                return Response({'success': True, 'message': 'Notes created successfully!', 'data': serializer.data}, status=status.HTTP_201_CREATED)
-        except serializer.errors as e:
-            # Notes instance not created
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            # Notes instance created successfully
+            return Response({'success': True, 'message': 'Notes created successfully!', 'data':serializer.data}, status=status.HTTP_200_OK)
+        except ValidationError as e:
             logger.exception(e)
-            return Response({'success': False, 'message': 'Notes does not create'}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response({'success': False, 'message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             logger.exception(e)
             return Response({'success': False, 'message': 'Oops! Something went wrong!'}, status=status.HTTP_400_BAD_REQUEST)
@@ -68,14 +68,17 @@ class NotesCRUD(APIView):
         try:
             notes = get_notes_by_id(request.data.get('id'))
             # Notes serializer
-            serializer = NotesUpdateSerializer(notes, data=request.data)
-            if serializer.is_valid():
-                serializer.save()
-                # Notes updated successfully
-                return Response({'success': True, 'message': 'Notes updated successfully!', 'data': serializer.data}, status=status.HTTP_202_ACCEPTED)
+            serializer = UpdateSerializer(notes, data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            # Notes updated successfully
+            return Response({'success': True, 'message': 'Notes updated successfully!', 'data':serializer.data}, status=status.HTTP_202_ACCEPTED)
         except Notes.DoesNotExist:
             # Notes instance does not exist
             return Response({'success': False, 'message': 'Notes does not exist!'}, status=status.HTTP_400_BAD_REQUEST)
+        except ValidationError as e:
+            logger.exception(e)
+            return Response({'success': False, 'message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             logger.exception(e)
             return Response({'success': False, 'message': 'Oops! Something went wrong!'}, status=status.HTTP_400_BAD_REQUEST)
