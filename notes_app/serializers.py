@@ -7,12 +7,19 @@ class NotesSerializer(serializers.ModelSerializer):
     """
         Notes Serializer
     """
+    title = serializers.CharField(min_length=4, max_length=400, required=True)
+    notes = serializers.CharField(min_length=4, max_length=1200, required=True)
     class Meta:
         model = Notes
         fields = ['title', 'notes', 'user_id']
 
 
-class NotesUpdateSerializer(serializers.ModelSerializer):
+class UpdateSerializer(serializers.ModelSerializer):
+    """
+        Notes Serializer
+    """
+    title = serializers.CharField(min_length=4, max_length=400, required=True)
+    notes = serializers.CharField(min_length=4, max_length=1200, required=True)
     class Meta:
         model = Notes
-        fields = ['title', 'notes']
+        fields = ['id', 'title', 'notes']
