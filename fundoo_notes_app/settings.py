@@ -74,13 +74,6 @@ DATABASES = {
     }
 }
 
-# JWT Authentication
-
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'auth_app.backends.JWTAuthentication',
-    )
-}
 
 # Password validation
 
@@ -117,11 +110,8 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-# JWT secret key
-
-JWT_SECRET_KEY = config.get('JWT_SECRET_KEY')
-
 # Email configuration
+
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
 EMAIL_HOST = config.get('EMAIL_HOST')
