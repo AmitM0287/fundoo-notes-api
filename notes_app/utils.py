@@ -32,7 +32,7 @@ def get_notes_by_user_id(user_id):
         notes = Notes.objects.filter(user_id=user_id)
         if not notes:
             raise Notes.DoesNotExist
-        return list(notes)
+        return notes
     except Notes.DoesNotExist as e:
         # Raise exception notes does not exist.
         logger.exception(e)
