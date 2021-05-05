@@ -6,10 +6,11 @@ from rest_framework.exceptions import ValidationError
 from django.conf import settings
 from django.contrib.auth.models import User, auth
 
+import jwt
+
 from logging_config.logger import get_logger
 from auth_app.serializers import LoginSerializer, RegisterSerializer, UsernameSerializer
-from auth_app.utils import get_object_by_id, get_object_by_username
-import jwt
+from auth_app.utils import get_object_by_id, get_object_by_username, get_cache, set_cache
 
 
 # Logger configuration
@@ -35,6 +36,8 @@ class LoginAPIView(APIView):
             # Authenticate username & password
             user = auth.authenticate(username=serializer.data.get('username'), password=serializer.data.get('password'))
             if user is not None:
+                # Implement redis
+                set_cache('username', serializer.data.get('username'))
                 return Response({'success': True, 'message': 'Login successfull!', 'username': serializer.data.get('username'), 'token': token}, status=status.HTTP_200_OK)
             else:
                 return Response({'success': False, 'message': 'Login failed!', 'username': serializer.data.get('username')}, status=status.HTTP_400_BAD_REQUEST)
@@ -63,7 +66,7 @@ class RegisterAPIView(APIView):
             # Create user instance
             user = User.objects.create_user(first_name=serializer.data.get('first_name'), last_name=serializer.data.get('last_name'), email=serializer.data.get('email'), username=serializer.data.get('username'), password=serializer.data.get('password'))
             user.save()
-            return Response({'success': True, 'message': 'Registration successfull!', 'username': serializer.data.get('first_name')}, status=status.HTTP_200_OK)
+            return Response({'success': True, 'message': 'Registration successfull!', 'username': serializer.data.get('username')}, status=status.HTTP_200_OK)
         except ValidationError as e:
             logger.exception(e)
             return Response({'success': False, 'message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
@@ -135,6 +138,9 @@ class ResetPasswordAPIView(APIView):
     
 
 class UserDeleteAPIView(APIView):
+    """
+        User Delete API View
+    """
     def delete(self, request):
         """
             This method is used to delete user instance.
