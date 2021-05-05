@@ -1,5 +1,6 @@
 from dotenv import dotenv_values
 from pathlib import Path
+import redis
 
 
 # Configuration for .env values
@@ -119,3 +120,6 @@ EMAIL_HOST_USER = config.get('EMAIL_HOST_USER')
 EMAIL_USE_TLS = True
 EMAIL_PORT = config.get('EMAIL_PORT')
 EMAIL_HOST_PASSWORD = config.get('EMAIL_HOST_PASSWORD')
+
+# Redis server
+CACHE = redis.Redis(host=config.get('REDIS_HOST'), port=config.get('REDIS_PORT'), password=config.get('REDIS_PASSWORD'))
