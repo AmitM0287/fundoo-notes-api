@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from notes_app.models import Notes
+from notes_app.models import Notes, Labels
 
 
 class NotesSerializer(serializers.ModelSerializer):
@@ -11,15 +11,13 @@ class NotesSerializer(serializers.ModelSerializer):
     notes = serializers.CharField(min_length=4, max_length=1200, required=True)
     class Meta:
         model = Notes
-        fields = ['title', 'notes', 'user_id']
+        fields = ['title', 'notes']
 
 
-class UpdateSerializer(serializers.ModelSerializer):
+class LabelsSerializer(serializers.ModelSerializer):
     """
-        Notes Serializer
+        Labels Serializer
     """
-    title = serializers.CharField(min_length=4, max_length=400, required=True)
-    notes = serializers.CharField(min_length=4, max_length=1200, required=True)
     class Meta:
-        model = Notes
-        fields = ['id', 'title', 'notes']
+        model = Labels
+        fields = ['name']
