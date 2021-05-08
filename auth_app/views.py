@@ -10,7 +10,7 @@ import jwt
 
 from logging_config.logger import get_logger
 from auth_app.serializers import LoginSerializer, RegisterSerializer, UsernameSerializer
-from auth_app.utils import get_object_by_id, get_object_by_username, get_cache, set_cache
+from auth_app.utils import get_object_by_id, get_object_by_username, set_cache, get_cache
 
 
 # Logger configuration
@@ -19,7 +19,7 @@ logger = get_logger()
 
 class LoginAPIView(APIView):
     """
-        Login API View
+        Login API View : LoginSerializer, create token, authenticate user, set cache
     """
     def post(self, request):
         """
@@ -36,11 +36,13 @@ class LoginAPIView(APIView):
             # Authenticate username & password
             user = auth.authenticate(username=serializer.data.get('username'), password=serializer.data.get('password'))
             if user is not None:
-                # Implement redis
+                # Set cache
                 set_cache('username', serializer.data.get('username'))
-                return Response({'success': True, 'message': 'Login successfull!', 'username': serializer.data.get('username'), 'token': token}, status=status.HTTP_200_OK)
+                # Login successfull
+                return Response({'success': True, 'message': 'Login successfull!', 'data' : {'username': get_cache('username'), 'token': token}}, status=status.HTTP_200_OK)
             else:
-                return Response({'success': False, 'message': 'Login failed!', 'username': serializer.data.get('username')}, status=status.HTTP_400_BAD_REQUEST)
+                # Login failed
+                return Response({'success': False, 'message': 'Login failed!', 'data': {'username': serializer.data.get('username')}}, status=status.HTTP_400_BAD_REQUEST)
         except ValidationError as e:
             logger.exception(e)
             return Response({'success': False, 'message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
@@ -51,7 +53,7 @@ class LoginAPIView(APIView):
 
 class RegisterAPIView(APIView):
     """
-        Register API View
+        Register API View : RegisterSerializer, check email & username already exist or not, create new user
     """
     def post(self, request):
         """
@@ -63,10 +65,17 @@ class RegisterAPIView(APIView):
             # Register serializer
             serializer = RegisterSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
+            # Check given email is already registered or not
+            if User.objects.filter(email=serializer.data.get('email')).exists():
+                return Response({'success': False, 'message': 'Gven email is already registered.', 'data': {'email': serializer.data.get('email')}}, status=status.HTTP_400_BAD_REQUEST)
+            # Check given username is already taken or not
+            if User.objects.filter(username=serializer.data.get('username')).exists():
+                return Response({'success': False, 'message': 'Gven username is already taken', 'data': {'username': serializer.data.get('username')}}, status=status.HTTP_400_BAD_REQUEST)
             # Create user instance
             user = User.objects.create_user(first_name=serializer.data.get('first_name'), last_name=serializer.data.get('last_name'), email=serializer.data.get('email'), username=serializer.data.get('username'), password=serializer.data.get('password'))
             user.save()
-            return Response({'success': True, 'message': 'Registration successfull!', 'username': serializer.data.get('username')}, status=status.HTTP_200_OK)
+            # User registration successfull
+            return Response({'success': True, 'message': 'Registration successfull!', 'data': {'username': serializer.data.get('username')}}, status=status.HTTP_200_OK)
         except ValidationError as e:
             logger.exception(e)
             return Response({'success': False, 'message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
@@ -77,7 +86,7 @@ class RegisterAPIView(APIView):
 
 class ResetUsernameAPIView(APIView):
     """
-        Reset Username API View
+        Reset Username API View : UsernameSerializer, reset username
     """
     def put(self, request):
         """
@@ -94,10 +103,11 @@ class ResetUsernameAPIView(APIView):
             # Reset username
             user.username = serializer.data.get('username')
             user.save()
-            return Response({'success': True, 'message': 'Reset username successfully!', 'username': serializer.data.get('username')}, status=status.HTTP_200_OK)
+            # User name updated successfully
+            return Response({'success': True, 'message': 'Reset username successfully!', 'data': {'username': serializer.data.get('username')}}, status=status.HTTP_200_OK)
         except User.DoesNotExist as e:
             logger.exception(e)
-            return Response({'success': False, 'message': 'User does not exist!', 'username': serializer.data.get('username')}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'success': False, 'message': 'User does not exist!', 'data': {'username': serializer.data.get('username')}}, status=status.HTTP_400_BAD_REQUEST)
         except ValidationError as e:
             logger.exception(e)
             return Response({'success': False, 'message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
@@ -108,7 +118,7 @@ class ResetUsernameAPIView(APIView):
 
 class ResetPasswordAPIView(APIView):
     """
-        Reset Password API View
+        Reset Password API View : LoginSerializer, reset password
     """
     def put(self, request):
         """
@@ -125,10 +135,11 @@ class ResetPasswordAPIView(APIView):
             # Reset password
             user.set_password(serializer.data.get('password'))
             user.save()
-            return Response({'success': True, 'message': 'Reset password successfully!', 'username': serializer.data.get('username')}, status=status.HTTP_200_OK)
+            # Password reseted successfully
+            return Response({'success': True, 'message': 'Reset password successfully!', 'data': {'username': serializer.data.get('username')}}, status=status.HTTP_200_OK)
         except User.DoesNotExist as e:
             logger.exception(e)
-            return Response({'success': False, 'message': 'User does not exist!', 'username': serializer.data.get('username')}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'success': False, 'message': 'User does not exist!', 'data': {'username': serializer.data.get('username')}}, status=status.HTTP_400_BAD_REQUEST)
         except ValidationError as e:
             logger.exception(e)
             return Response({'success': False, 'message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
@@ -139,7 +150,7 @@ class ResetPasswordAPIView(APIView):
 
 class UserDeleteAPIView(APIView):
     """
-        User Delete API View
+        User Delete API View : UsernameSerializer, delete user instance
     """
     def delete(self, request):
         """
@@ -155,10 +166,11 @@ class UserDeleteAPIView(APIView):
             user = get_object_by_username(serializer.data.get('username'))
             # Delete user instance
             user.delete()
-            return Response({'success': True, 'message': 'User deleted successfully!', 'username': serializer.data.get('username')}, status=status.HTTP_200_OK)
+            # User deleted successfully
+            return Response({'success': True, 'message': 'User deleted successfully!', 'data': {'username': serializer.data.get('username')}}, status=status.HTTP_200_OK)
         except User.DoesNotExist as e:
             logger.exception(e)
-            return Response({'success': False, 'message': 'User does not exist!', 'username': serializer.data.get('username')}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'success': False, 'message': 'User does not exist!', 'data': {'username': serializer.data.get('username')}}, status=status.HTTP_400_BAD_REQUEST)
         except ValidationError as e:
             logger.exception(e)
             return Response({'success': False, 'message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
