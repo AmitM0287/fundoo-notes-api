@@ -1,10 +1,12 @@
+from __future__ import unicode_literals
+
 from django.contrib.auth.models import User
 from django.db import models
 
 
 class Labels(models.Model):
     """
-     Labels Model
+     Labels Model : name, user_id, created_at, modified_at
     """
     name = models.CharField(max_length=150)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -14,7 +16,7 @@ class Labels(models.Model):
 
 class Notes(models.Model):
     """
-        Notes Model
+        Notes Model : title, description, user_id, created_at, modified_at, collaborator, label
     """
     title = models.CharField(max_length=400)
     description = models.CharField(max_length=1200)
