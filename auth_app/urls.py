@@ -11,4 +11,5 @@ urlpatterns = [
     path('reset/username/', views.ResetUsernameAPIView.as_view(), name='user_reset_username'),
     path('reset/password/', views.ResetPasswordAPIView.as_view(), name='user_reset_password'),
     path('delete/', views.UserDeleteAPIView.as_view(), name='user_delete'),
+    path('activate/<token>/', views.VerifyEmail.as_view(), name='activate_user'),
 ]
