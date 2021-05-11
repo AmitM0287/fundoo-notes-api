@@ -55,11 +55,20 @@ def varify_token(function):
         :return: It's return updated function.
     """
     def wrapper(self, request):
-        # Get token from header
-        token = request.headers.get('token')
-        if not token:
-            return Response({'success': False, 'message': 'Please include token!'}, status=status.HTTP_400_BAD_REQUEST)
-        return function(self, request, token)
+        try:
+            # Get token from header
+            token = request.headers.get('token')
+            if not token:
+                return Response({'success': False, 'message': 'Not Authorized'}, status=status.HTTP_400_BAD_REQUEST)
+            # Getting user id from token
+            user_id = get_user_id(token)
+            return function(self, request, user_id)
+        except InvalidSignatureError as e:
+            logger.exception(e)
+            return Response({'success': False, 'message': 'Invalid token!'}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            logger.exception(e)
+            return Response({'success': False, 'message': 'Oops! Something went wrong!'}, status=status.HTTP_400_BAD_REQUEST)
     return wrapper
 
 
