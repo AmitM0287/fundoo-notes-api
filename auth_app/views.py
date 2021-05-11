@@ -5,6 +5,7 @@ from rest_framework.exceptions import ValidationError
 
 from django.conf import settings
 from django.contrib.auth.models import User, auth
+from django.core.mail import EmailMessage
 
 import jwt
 
@@ -73,7 +74,20 @@ class RegisterAPIView(APIView):
                 return Response({'success': False, 'message': 'Gven username is already taken', 'data': {'username': serializer.data.get('username')}}, status=status.HTTP_400_BAD_REQUEST)
             # Create user instance
             user = User.objects.create_user(first_name=serializer.data.get('first_name'), last_name=serializer.data.get('last_name'), email=serializer.data.get('email'), username=serializer.data.get('username'), password=serializer.data.get('password'))
+            # Make user as not active
+            user.is_active = False
             user.save()
+            # Create token
+            token = jwt.encode({'username': serializer.data.get('username')}, settings.SECRET_KEY, algorithm='HS256')
+            link = 'http://127.0.0.1:8000/user/activate/' + token + '/'
+            # Sending activation mail
+            email = EmailMessage(
+                    'Activate your account', # Subject
+                    'Please click this link to activate your account: ' + link, # Body
+                    settings.EMAIL_HOST_USER, # From
+                    [serializer.data.get('email')], # To
+                )
+            email.send(fail_silently=False)
             # User registration successfull
             return Response({'success': True, 'message': 'Registration successfull!', 'data': {'username': serializer.data.get('username')}}, status=status.HTTP_200_OK)
         except ValidationError as e:
@@ -174,6 +188,28 @@ class UserDeleteAPIView(APIView):
         except ValidationError as e:
             logger.exception(e)
             return Response({'success': False, 'message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            logger.exception(e)
+            return Response({'success': False, 'message': 'Oops! Something went wrong! Please try again...'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class VerifyEmail(APIView):
+    """
+        VerifyEmail : Token, decode token, activate user
+    """
+    def get(self, request, *args, **kwargs):
+        try:
+            # Getting token from URL
+            token = kwargs['token']
+            # Decode token
+            data = jwt.decode(token, settings.SECRET_KEY, algorithms='HS256')
+            # Get user
+            user = get_object_by_username(data.get('username'))
+            # Set user as active
+            user.is_active = True
+            user.save()
+            # User activated successfully
+            return Response({'success': True, 'message': 'Account activated successfully!', 'data': {'username': data.get('username')}}, status=status.HTTP_200_OK)
         except Exception as e:
             logger.exception(e)
             return Response({'success': False, 'message': 'Oops! Something went wrong! Please try again...'}, status=status.HTTP_400_BAD_REQUEST)
