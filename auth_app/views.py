@@ -79,7 +79,7 @@ class RegisterAPIView(APIView):
             user.save()
             # Create token
             token = jwt.encode({'username': serializer.data.get('username')}, settings.SECRET_KEY, algorithm='HS256')
-            link = 'http://127.0.0.1:8000/user/activate/' + token + '/'
+            link = 'http://127.0.0.1:8000/user/activate/'" + token + "'/'
             # Sending activation mail
             email = EmailMessage(
                     'Activate your account', # Subject
@@ -197,7 +197,7 @@ class VerifyEmail(APIView):
     """
         VerifyEmail : Token, decode token, activate user
     """
-    def get(self, request, *args, **kwargs):
+    def get(self, request, *args,**kwargs):
         try:
             # Getting token from URL
             token = kwargs['token']
