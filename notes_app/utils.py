@@ -57,7 +57,7 @@ def varify_token(function):
     def wrapper(self, request):
         try:
             # Get token from header
-            token = request.headers.get('token')
+            token = request.headers.get('token') or request.META.get('HTTP_TOKEN')
             if not token:
                 return Response({'success': False, 'message': 'Not Authorized'}, status=status.HTTP_400_BAD_REQUEST)
             # Getting user id from token
