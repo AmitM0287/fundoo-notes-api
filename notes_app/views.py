@@ -1,6 +1,6 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework import status
+from rest_framework import serializers, status
 from rest_framework.exceptions import ValidationError
 
 from jwt.exceptions import InvalidSignatureError
@@ -54,8 +54,9 @@ class NotesAPIView(APIView):
             # Create notes instance
             notes = Notes(title=serializer.data.get('title'), description=serializer.data.get('description'), user_id=user_id)
             notes.save()
-            # Notes instance created successfully
-            return Response({'success': True, 'message': 'Notes created successfully!', 'data': {'notes_list': serializer.data}}, status=status.HTTP_200_OK)
+            data = serializer.data
+            data.update({'id': notes.id})
+            return Response({'success': True, 'message': 'Notes created successfully!', 'data': {'notes_list': data}}, status=status.HTTP_200_OK)
         except ValidationError as e:
             logger.exception(e)
             return Response({'success': False, 'message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
