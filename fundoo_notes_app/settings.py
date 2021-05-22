@@ -30,6 +30,12 @@ INSTALLED_APPS = [
     'rest_framework',
     'auth_app',
     'notes_app',
+    'django.contrib.sites',
+    'social_app',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
 ]
 
 MIDDLEWARE = [
@@ -123,3 +129,25 @@ EMAIL_HOST_PASSWORD = config.get('EMAIL_HOST_PASSWORD')
 
 # Redis server
 CACHE = redis.Redis(host=config.get('REDIS_HOST'), port=config.get('REDIS_PORT'), password=config.get('REDIS_PASSWORD'))
+
+# All-Auth
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+ )
+
+SITE_ID = 1
+
+LOGIN_REDIRECT_URL = '/'
+
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        }
+    }
+}
