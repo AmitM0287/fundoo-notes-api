@@ -1,3 +1,4 @@
+from elasticsearch.client import Elasticsearch
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import serializers, status
@@ -5,10 +6,13 @@ from rest_framework.exceptions import ValidationError
 
 from jwt.exceptions import InvalidSignatureError
 
+from django.conf import settings
+
 from notes_app.serializers import NotesSerializer, LabelsSerializer
 from logging_config.logger import get_logger
 from notes_app.models import Notes, Labels
 from notes_app.utils import get_notes_by_id, get_notes_by_user_id, varify_token, get_labels_by_id, get_labels_by_user_id
+from notes_app.elastic_search import ElasticSearch
 
 
 # Logger configuration
@@ -31,6 +35,12 @@ class NotesAPIView(APIView):
             notes = get_notes_by_user_id(user_id)
             # Notes serializer
             serializer = NotesSerializer(notes, many=True)
+            # Getting notes from elastic search
+            es = ElasticSearch()
+            es_data = es.get_data(user_id=user_id)
+            for hit in es_data['hits']['hits']:
+                data = hit['_source']
+            print(data)
             # Return notes instances
             return Response({'success': True, 'message': 'Getting notes successfully!', 'data': {'notes_list': serializer.data}}, status=status.HTTP_200_OK)
         except Notes.DoesNotExist as e:
@@ -56,6 +66,10 @@ class NotesAPIView(APIView):
             notes.save()
             data = serializer.data
             data.update({'id': notes.id})
+            # Save data into elastic search
+            es = ElasticSearch()
+            es.save_data(title=serializer.data.get('title'), description=serializer.data.get('description'), user_id=user_id)
+            #Success response
             return Response({'success': True, 'message': 'Notes created successfully!', 'data': {'notes_list': data}}, status=status.HTTP_200_OK)
         except ValidationError as e:
             logger.exception(e)
@@ -77,6 +91,9 @@ class NotesAPIView(APIView):
             serializer = NotesSerializer(notes, data=request.data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
+            # Update data in elastic search
+            es = ElasticSearch()
+            es.update_data(doc_id=request.data.get('id'), es_data=request.data)
             # Notes updated successfully
             return Response({'success': True, 'message': 'Notes updated successfully!', 'data': {'notes_list': serializer.data}}, status=status.HTTP_202_ACCEPTED)
         except Notes.DoesNotExist:
@@ -100,6 +117,9 @@ class NotesAPIView(APIView):
             notes = get_notes_by_id(request.data.get('id'))
             # Delete notes instance
             notes.delete()
+            # Delete notes from elastic search
+            es = ElasticSearch()
+            es.delete_data(doc_id=request.data.get('id'))
             # Notes deleted successfully
             return Response({'success': True, 'message': 'Notes deleted successfully!'}, status=status.HTTP_204_NO_CONTENT)
         except Notes.DoesNotExist:
