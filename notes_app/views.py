@@ -38,11 +38,11 @@ class NotesAPIView(APIView):
             # Getting notes from elastic search
             es = ElasticSearch()
             es_data = es.get_data(user_id=user_id)
-            for hit in es_data['hits']['hits']:
-                data = hit['_source']
-            print(data)
+            data = []
+            for ite in range(len(es_data)):
+                data.append(es_data[ite]['_source'])
             # Return notes instances
-            return Response({'success': True, 'message': 'Getting notes successfully!', 'data': {'notes_list': serializer.data}}, status=status.HTTP_200_OK)
+            return Response({'success': True, 'message': 'Getting notes successfully!', 'data': {'notes_list': data}}, status=status.HTTP_200_OK)
         except Notes.DoesNotExist as e:
             logger.exception(e)
             return Response({'success': False, 'message': 'You do not have any notes!'}, status=status.HTTP_400_BAD_REQUEST)
@@ -93,7 +93,7 @@ class NotesAPIView(APIView):
             serializer.save()
             # Update data in elastic search
             es = ElasticSearch()
-            es.update_data(doc_id=request.data.get('id'), es_data=request.data)
+            es.update_data(doc_id=request.data.get('id'), es_data={'title': request.data.get('title'), 'description': request.data.get('description')})
             # Notes updated successfully
             return Response({'success': True, 'message': 'Notes updated successfully!', 'data': {'notes_list': serializer.data}}, status=status.HTTP_202_ACCEPTED)
         except Notes.DoesNotExist:
@@ -115,11 +115,11 @@ class NotesAPIView(APIView):
         try:
             # Get notes object by notes id
             notes = get_notes_by_id(request.data.get('id'))
-            # Delete notes instance
-            notes.delete()
             # Delete notes from elastic search
             es = ElasticSearch()
             es.delete_data(doc_id=request.data.get('id'))
+            # Delete notes instance
+            notes.delete()
             # Notes deleted successfully
             return Response({'success': True, 'message': 'Notes deleted successfully!'}, status=status.HTTP_204_NO_CONTENT)
         except Notes.DoesNotExist:
