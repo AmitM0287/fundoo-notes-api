@@ -151,3 +151,7 @@ SOCIALACCOUNT_PROVIDERS = {
         }
     }
 }
+
+# Elastic search
+ES_HOST = config.get('ES_HOST')
+ES_PORT = config.get('ES_PORT')
