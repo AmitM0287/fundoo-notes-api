@@ -28,9 +28,9 @@ class ElasticSearch:
             }
         data = self.sort_data()
         if not data:
-            doc_id = 1
+            doc_id = 24
         else:
-            doc_id = int(data['_id']) + 1
+            doc_id = int(data[0]['_id']) + 1
         self.es.index(index='notes', id=doc_id, body=es_data)
 
     def get_data(self, user_id):
@@ -44,7 +44,8 @@ class ElasticSearch:
                 "term" : {"user_id": user_id}
             }
         }
-        return self.es.search(index="notes", body=query)
+        data = self.es.search(index="notes", body=query)
+        return data['hits']['hits']
 
     def delete_data(self, doc_id):
         """
@@ -75,4 +76,4 @@ class ElasticSearch:
             ]
         }
         es_data = self.es.search(index="notes", body=query)
-        return es_data['hits']['hits'][0]
+        return es_data['hits']['hits']
