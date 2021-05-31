@@ -93,7 +93,7 @@ class NotesAPIView(APIView):
             serializer.save()
             # Update data in elastic search
             es = ElasticSearch()
-            es.update_data(doc_id=request.data.get('id'), es_data={'title': request.data.get('title'), 'description': request.data.get('description')})
+            es.update_data(doc_id=request.data.get('id'), es_data={'doc': { 'title': request.data.get('title'), 'description': request.data.get('description')}})
             # Notes updated successfully
             return Response({'success': True, 'message': 'Notes updated successfully!', 'data': {'notes_list': serializer.data}}, status=status.HTTP_202_ACCEPTED)
         except Notes.DoesNotExist:
