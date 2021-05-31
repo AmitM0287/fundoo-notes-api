@@ -115,11 +115,11 @@ class NotesAPIView(APIView):
         try:
             # Get notes object by notes id
             notes = get_notes_by_id(request.data.get('id'))
+            # Delete notes instance
+            notes.delete()
             # Delete notes from elastic search
             es = ElasticSearch()
             es.delete_data(doc_id=request.data.get('id'))
-            # Delete notes instance
-            notes.delete()
             # Notes deleted successfully
             return Response({'success': True, 'message': 'Notes deleted successfully!'}, status=status.HTTP_204_NO_CONTENT)
         except Notes.DoesNotExist:
