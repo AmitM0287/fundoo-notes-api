@@ -1,3 +1,5 @@
+import json
+from rest_framework.serializers import Serializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -5,13 +7,13 @@ from rest_framework.exceptions import ValidationError
 
 from django.conf import settings
 from django.contrib.auth.models import User, auth
-from django.core.mail import EmailMessage
 
 import jwt
 
 from logging_config.logger import get_logger
 from auth_app.serializers import LoginSerializer, RegisterSerializer, UsernameSerializer
 from auth_app.utils import get_object_by_id, get_object_by_username, set_cache, get_cache
+from auth_app.send import send_data_to_queue
 
 
 # Logger configuration
@@ -74,20 +76,12 @@ class RegisterAPIView(APIView):
                 return Response({'success': False, 'message': 'Gven username is already taken', 'data': {'username': serializer.data.get('username')}}, status=status.HTTP_400_BAD_REQUEST)
             # Create user instance
             user = User.objects.create_user(first_name=serializer.data.get('first_name'), last_name=serializer.data.get('last_name'), email=serializer.data.get('email'), username=serializer.data.get('username'), password=serializer.data.get('password'))
+            # Send data to queue
+            json_data = json.dumps({'username': serializer.data.get('username'), 'user_email': serializer.data.get('email'), 'SECRET_KEY': settings.SECRET_KEY, 'EMAIL_HOST_USER': settings.EMAIL_HOST_USER})
+            send_data_to_queue(data=json_data)
             # Make user as not active
             user.is_active = False
             user.save()
-            # Create token
-            token = jwt.encode({'username': serializer.data.get('username')}, settings.SECRET_KEY, algorithm='HS256')
-            link = 'http://127.0.0.1:8000/user/activate/' + token + '/'
-            # Sending activation mail
-            email = EmailMessage(
-                    'Activate your account', # Subject
-                    'Please click this link to activate your account: ' + link, # Body
-                    settings.EMAIL_HOST_USER, # From
-                    [serializer.data.get('email')], # To
-                )
-            email.send(fail_silently=False)
             # User registration successfull
             return Response({'success': True, 'message': 'Registration successfull!', 'data': {'username': serializer.data.get('username')}}, status=status.HTTP_200_OK)
         except ValidationError as e:
