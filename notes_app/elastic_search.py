@@ -28,7 +28,7 @@ class ElasticSearch:
             }
         data = self.sort_data()
         if not data:
-            doc_id = 24
+            doc_id = 1
         else:
             doc_id = int(data[0]['_id']) + 1
         self.es.index(index='notes', id=doc_id, body=es_data)
