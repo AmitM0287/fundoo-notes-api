@@ -80,7 +80,7 @@ class RegisterAPIView(APIView):
             json_data = json.dumps({'username': serializer.data.get('username'), 'user_email': serializer.data.get('email'), 'SECRET_KEY': settings.SECRET_KEY, 'EMAIL_HOST_USER': settings.EMAIL_HOST_USER})
             send_data_to_queue(data=json_data)
             # Make user as not active
-            user.is_active = False
+            # user.is_active = False
             user.save()
             # User registration successfull
             return Response({'success': True, 'message': 'Registration successfull!', 'data': {'username': serializer.data.get('username')}}, status=status.HTTP_200_OK)
