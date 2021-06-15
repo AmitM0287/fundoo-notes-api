@@ -224,7 +224,7 @@ class ForgotPasswordAPIView(APIView):
             # Extract email
             user_email = user.email
             # Reset password link
-            reset_password_link = 'http://127.0.0.1:4200/reset/password'
+            reset_password_link = 'http://127.0.0.1:4200/reset-password'
             # Sending activation mail
             email = EmailMessage(
                 'Reset your account password', # Subject
