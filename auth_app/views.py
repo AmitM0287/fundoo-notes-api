@@ -7,6 +7,7 @@ from rest_framework.exceptions import ValidationError
 
 from django.conf import settings
 from django.contrib.auth.models import User, auth
+from django.core.mail import EmailMessage
 
 import jwt
 
@@ -77,8 +78,8 @@ class RegisterAPIView(APIView):
             # Create user instance
             user = User.objects.create_user(first_name=serializer.data.get('first_name'), last_name=serializer.data.get('last_name'), email=serializer.data.get('email'), username=serializer.data.get('username'), password=serializer.data.get('password'))
             # Send data to queue
-            json_data = json.dumps({'username': serializer.data.get('username'), 'user_email': serializer.data.get('email'), 'SECRET_KEY': settings.SECRET_KEY, 'EMAIL_HOST_USER': settings.EMAIL_HOST_USER})
-            send_data_to_queue(data=json_data)
+            # json_data = json.dumps({'username': serializer.data.get('username'), 'user_email': serializer.data.get('email'), 'SECRET_KEY': settings.SECRET_KEY, 'EMAIL_HOST_USER': settings.EMAIL_HOST_USER})
+            # send_data_to_queue(data=json_data)
             # Make user as not active
             # user.is_active = False
             user.save()
@@ -187,9 +188,9 @@ class UserDeleteAPIView(APIView):
             return Response({'success': False, 'message': 'Oops! Something went wrong! Please try again...'}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class VerifyEmail(APIView):
+class VerifyEmailAPIView(APIView):
     """
-        VerifyEmail : Token, decode token, activate user
+        VerifyEmailAPIView : Token, decode token, activate user
     """
     def get(self, request, *args,**kwargs):
         try:
@@ -204,6 +205,41 @@ class VerifyEmail(APIView):
             user.save()
             # User activated successfully
             return Response({'success': True, 'message': 'Account activated successfully!', 'data': {'username': data.get('username')}}, status=status.HTTP_200_OK)
+        except Exception as e:
+            logger.exception(e)
+            return Response({'success': False, 'message': 'Oops! Something went wrong! Please try again...'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ForgotPasswordAPIView(APIView):
+    """
+        ForgotPasswordAPIView: 
+    """
+    def post(self, request):
+        try:
+            # Username serializer
+            serializer = UsernameSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            # Get user instance according to username
+            user = get_object_by_username(serializer.data.get('username'))
+            # Extract email
+            user_email = user.email
+            # Reset password link
+            reset_password_link = 'http://127.0.0.1:4200/reset/password'
+            # Sending activation mail
+            email = EmailMessage(
+                'Reset your account password', # Subject
+                'Please click this link to reset your account password: ' + reset_password_link, # Body
+                settings.EMAIL_HOST_USER, # From
+                [user_email], # To
+            )
+            email.send(fail_silently=False)
+            return Response({'success': True, 'message': 'Email sended successfully for reset password!', 'data': {'username': serializer.data.get('username')}}, status=status.HTTP_200_OK)
+        except User.DoesNotExist as e:
+            logger.exception(e)
+            return Response({'success': False, 'message': 'User does not exist!', 'data': {'username': serializer.data.get('username')}}, status=status.HTTP_400_BAD_REQUEST)
+        except ValidationError as e:
+            logger.exception(e)
+            return Response({'success': False, 'message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             logger.exception(e)
             return Response({'success': False, 'message': 'Oops! Something went wrong! Please try again...'}, status=status.HTTP_400_BAD_REQUEST)
