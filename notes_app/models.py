@@ -25,3 +25,5 @@ class Notes(models.Model):
     modified_at = models.DateTimeField(auto_now=True)
     collaborator = models.ManyToManyField(User, related_name='collaborator')
     label = models.ManyToManyField(Labels)
+    isArchive = models.BooleanField(default=False)
+    isTrash = models.BooleanField(default=False)
