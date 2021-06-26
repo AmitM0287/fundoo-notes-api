@@ -12,7 +12,7 @@ class NotesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Notes
-        fields = ['title', 'description']
+        fields = ['id', 'title', 'description', 'isArchive', 'isTrash']
 
 
 class LabelsSerializer(serializers.ModelSerializer):
