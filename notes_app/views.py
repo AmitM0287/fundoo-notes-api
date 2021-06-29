@@ -109,29 +109,6 @@ class NotesAPIView(APIView):
             logger.exception(e)
             return Response({'success': False, 'message': 'Oops! Something went wrong!'}, status=status.HTTP_400_BAD_REQUEST)
 
-    def delete(self, request):
-        """
-            This method is used to delete notes instance.
-            :param request: It's accept notes id as parameter.
-            :return: It's return response that notes succcessfully deleted or not.
-        """
-        try:
-            # Get notes object by notes id
-            notes = get_notes_by_id(request.data.get('id'))
-            # Delete notes instance
-            notes.delete()
-            # # Delete notes from elastic search
-            # es = ElasticSearch()
-            # es.delete_data(doc_id=request.data.get('id'))
-            # Notes deleted successfully
-            return Response({'success': True, 'message': 'Notes deleted successfully!'}, status=status.HTTP_204_NO_CONTENT)
-        except Notes.DoesNotExist:
-            # Notes does not exist
-            return Response({'success': False, 'message': 'Notes does not exist!'}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            logger.exception(e)
-            return Response({'success': False, 'message': 'Oops! Something went wrong!'}, status=status.HTTP_400_BAD_REQUEST)
-
 
 class ArchiveNotesAPIView(APIView):
     """
@@ -181,6 +158,36 @@ class TrashNotesAPIView(APIView):
         except Exception as e:
             logger.exception(e)
             return Response({'success': False, 'message': 'Oops! Something went wrong! Please try again...'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class DeleteNoteAPIView(APIView):
+    """
+        DeleteNoteAPIView: Delete notes
+    """
+    def delete(self, request, *args,**kwargs):
+        """
+            This method is used to delete notes instance.
+            :param **kwargs: It's accept notes id as kargs.
+            :return: It's return response that notes succcessfully deleted or not.
+        """
+        try:
+            # Getting id from URL
+            id = kwargs['id']
+            # Get notes object by notes id
+            notes = get_notes_by_id(id)
+            # # Delete notes instance
+            notes.delete()
+            # # Delete notes from elastic search
+            # es = ElasticSearch()
+            # es.delete_data(doc_id=request.data.get('id'))
+            # Notes deleted successfully
+            return Response({'success': True, 'message': 'Notes deleted successfully!'}, status=status.HTTP_204_NO_CONTENT)
+        except Notes.DoesNotExist:
+            # Notes does not exist
+            return Response({'success': False, 'message': 'Notes does not exist!'}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            logger.exception(e)
+            return Response({'success': False, 'message': 'Oops! Something went wrong!'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LabelsAPIView(APIView):
