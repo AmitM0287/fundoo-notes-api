@@ -17,6 +17,9 @@ from notes_app.elastic_search import ElasticSearch
 import xlsxwriter
 import pandas
 
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
+
 
 # Logger configuration
 logger = get_logger()
@@ -26,6 +29,9 @@ class NotesAPIView(APIView):
     """
         NotesAPIView : GET, ADD, UPDATE, DELETE Notes
     """
+    @swagger_auto_schema(manual_parameters=[
+        openapi.Parameter('TOKEN', openapi.IN_HEADER, "token", type=openapi.TYPE_STRING), 
+    ])
     @varify_token
     def get(self, request, user_id):
         """
