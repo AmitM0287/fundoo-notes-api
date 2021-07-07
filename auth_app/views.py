@@ -14,8 +14,10 @@ import jwt
 from logging_config.logger import get_logger
 from auth_app.serializers import LoginSerializer, RegisterSerializer, UsernameSerializer
 from auth_app.utils import get_object_by_id, get_object_by_username, set_cache, get_cache
-from auth_app.send import send_data_to_queue
+# from auth_app.send import send_data_to_queue
 
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 # Logger configuration
 logger = get_logger()
@@ -25,6 +27,12 @@ class LoginAPIView(APIView):
     """
         Login API View : LoginSerializer, create token, authenticate user, set cache
     """
+    @swagger_auto_schema(request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'username': openapi.Schema(type=openapi.TYPE_STRING, description="username"),
+            'password': openapi.Schema(type=openapi.TYPE_STRING, description="password")
+        }))
     def post(self, request):
         """
             This method is used for login authentication.
@@ -41,9 +49,9 @@ class LoginAPIView(APIView):
             user = auth.authenticate(username=serializer.data.get('username'), password=serializer.data.get('password'))
             if user is not None:
                 # Set cache
-                set_cache('username', serializer.data.get('username'))
+                # set_cache('username', serializer.data.get('username'))
                 # Login successfull
-                return Response({'success': True, 'message': 'Login successfull!', 'data' : {'username': get_cache('username'), 'token': token}}, status=status.HTTP_200_OK)
+                return Response({'success': True, 'message': 'Login successfull!', 'data' : {'username': serializer.data.get('username'), 'token': token}}, status=status.HTTP_200_OK)
             else:
                 # Login failed
                 return Response({'success': False, 'message': 'Login failed!', 'data': {'username': serializer.data.get('username')}}, status=status.HTTP_400_BAD_REQUEST)
@@ -59,6 +67,15 @@ class RegisterAPIView(APIView):
     """
         Register API View : RegisterSerializer, check email & username already exist or not, create new user
     """
+    @swagger_auto_schema(request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'first_name': openapi.Schema(type=openapi.TYPE_STRING, description="first name"),
+            'last_name': openapi.Schema(type=openapi.TYPE_STRING, description="last name"),
+            'email': openapi.Schema(type=openapi.TYPE_STRING, description="email"),
+            'username': openapi.Schema(type=openapi.TYPE_STRING, description="username"),
+            'password': openapi.Schema(type=openapi.TYPE_STRING, description="password")
+        }))
     def post(self, request):
         """
             This method is used to create new user instance.
@@ -97,6 +114,12 @@ class ResetUsernameAPIView(APIView):
     """
         Reset Username API View : UsernameSerializer, reset username
     """
+    @swagger_auto_schema(request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'id': openapi.Schema(type=openapi.TYPE_INTEGER, description="id"),
+            'username': openapi.Schema(type=openapi.TYPE_STRING, description="username")
+        }))
     def put(self, request):
         """
             This method is used to update username of user instance.

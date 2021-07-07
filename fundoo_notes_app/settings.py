@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'drf_yasg',
     'rest_framework',
     'corsheaders',
     'auth_app',
@@ -134,7 +135,7 @@ EMAIL_PORT = config.get('EMAIL_PORT')
 EMAIL_HOST_PASSWORD = config.get('EMAIL_HOST_PASSWORD')
 
 # Redis server
-CACHE = redis.Redis(host=config.get('REDIS_HOST'), port=config.get('REDIS_PORT'), password=config.get('REDIS_PASSWORD'))
+# CACHE = redis.Redis(host=config.get('REDIS_HOST'), port=config.get('REDIS_PORT'), password=config.get('REDIS_PASSWORD'))
 
 # All-Auth
 AUTHENTICATION_BACKENDS = (
@@ -159,5 +160,5 @@ SOCIALACCOUNT_PROVIDERS = {
 }
 
 # Elastic search
-ES_HOST = config.get('ES_HOST')
-ES_PORT = config.get('ES_PORT')
+# ES_HOST = config.get('ES_HOST')
+# ES_PORT = config.get('ES_PORT')
