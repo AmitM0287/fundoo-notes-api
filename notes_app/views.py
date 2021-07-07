@@ -20,7 +20,6 @@ import pandas
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
-
 # Logger configuration
 logger = get_logger()
 
@@ -30,7 +29,7 @@ class NotesAPIView(APIView):
         NotesAPIView : GET, ADD, UPDATE, DELETE Notes
     """
     @swagger_auto_schema(manual_parameters=[
-        openapi.Parameter('TOKEN', openapi.IN_HEADER, "token", type=openapi.TYPE_STRING), 
+        openapi.Parameter('TOKEN', openapi.IN_HEADER, "token", type=openapi.TYPE_STRING)
     ])
     @varify_token
     def get(self, request, user_id):
@@ -59,6 +58,16 @@ class NotesAPIView(APIView):
             logger.exception(e)
             return Response({'success': False, 'message': 'Oops! Something went wrong! Please try again...'}, status=status.HTTP_400_BAD_REQUEST)
 
+    @swagger_auto_schema(manual_parameters=[
+        openapi.Parameter('TOKEN', openapi.IN_HEADER, "token", type=openapi.TYPE_STRING)
+    ],
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'title': openapi.Schema(type=openapi.TYPE_STRING, description="title"),
+            'description': openapi.Schema(type=openapi.TYPE_STRING, description="description")
+        }
+    ))
     @varify_token
     def post(self, request, user_id):
         """
@@ -87,6 +96,14 @@ class NotesAPIView(APIView):
             logger.exception(e)
             return Response({'success': False, 'message': 'Oops! Something went wrong!'}, status=status.HTTP_400_BAD_REQUEST)
 
+    @swagger_auto_schema(request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'id': openapi.Schema(type=openapi.TYPE_STRING, description="note id"),
+            'title': openapi.Schema(type=openapi.TYPE_STRING, description="title"),
+            'description': openapi.Schema(type=openapi.TYPE_STRING, description="description")
+        }
+    ))
     def put(self, request):
         """
             This method is used to update notes instance.
@@ -120,6 +137,12 @@ class ArchiveNotesAPIView(APIView):
     """
         ArchiveNotesAPIView: Archive & UnArchive notes.
     """
+    @swagger_auto_schema(request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'note_id': openapi.Schema(type=openapi.TYPE_STRING, description="note id")
+        }
+    ))
     def post(self, request):
         """
             This method is used for archive & unarchive notes.
@@ -145,6 +168,12 @@ class TrashNotesAPIView(APIView):
     """
         TrashNotesAPIView: Trash notes $ Restore notes.
     """
+    @swagger_auto_schema(request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'note_id': openapi.Schema(type=openapi.TYPE_STRING, description="note id")
+        }
+    ))
     def post(self, request):
         """
             This method is used for trash notes & restore notes.

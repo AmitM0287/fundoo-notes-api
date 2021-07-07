@@ -32,7 +32,8 @@ class LoginAPIView(APIView):
         properties={
             'username': openapi.Schema(type=openapi.TYPE_STRING, description="username"),
             'password': openapi.Schema(type=openapi.TYPE_STRING, description="password")
-        }))
+        }
+    ))
     def post(self, request):
         """
             This method is used for login authentication.
@@ -75,7 +76,8 @@ class RegisterAPIView(APIView):
             'email': openapi.Schema(type=openapi.TYPE_STRING, description="email"),
             'username': openapi.Schema(type=openapi.TYPE_STRING, description="username"),
             'password': openapi.Schema(type=openapi.TYPE_STRING, description="password")
-        }))
+        }
+    ))
     def post(self, request):
         """
             This method is used to create new user instance.
@@ -117,9 +119,10 @@ class ResetUsernameAPIView(APIView):
     @swagger_auto_schema(request_body=openapi.Schema(
         type=openapi.TYPE_OBJECT,
         properties={
-            'id': openapi.Schema(type=openapi.TYPE_INTEGER, description="id"),
-            'username': openapi.Schema(type=openapi.TYPE_STRING, description="username")
-        }))
+            'id': openapi.Schema(type=openapi.TYPE_INTEGER, description="user id"),
+            'username': openapi.Schema(type=openapi.TYPE_STRING, description="new username")
+        }
+    ))
     def put(self, request):
         """
             This method is used to update username of user instance.
@@ -152,6 +155,13 @@ class ResetPasswordAPIView(APIView):
     """
         Reset Password API View : LoginSerializer, reset password
     """
+    @swagger_auto_schema(request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'username': openapi.Schema(type=openapi.TYPE_STRING, description="username"),
+            'password': openapi.Schema(type=openapi.TYPE_STRING, description="new password")
+        }
+    ))
     def put(self, request):
         """
             This method is used to reset password for a user instance.
@@ -184,6 +194,12 @@ class UserDeleteAPIView(APIView):
     """
         User Delete API View : UsernameSerializer, delete user instance
     """
+    @swagger_auto_schema(request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'username': openapi.Schema(type=openapi.TYPE_STRING, description="username")
+        }
+    ))
     def delete(self, request):
         """
             This method is used to delete user instance.
@@ -237,6 +253,12 @@ class ForgotPasswordAPIView(APIView):
     """
         ForgotPasswordAPIView: 
     """
+    @swagger_auto_schema(request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'username': openapi.Schema(type=openapi.TYPE_STRING, description="username")
+        }
+    ))
     def post(self, request):
         try:
             # Username serializer
