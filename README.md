@@ -1,1 +1,1 @@
-fundoo notes app
+fundoo notes api
